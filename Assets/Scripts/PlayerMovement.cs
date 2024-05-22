@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    private const float DOUBLE_CLICK_TIME = .3f;
     private Rigidbody2D rb;
     private BoxCollider2D coll;
     private SpriteRenderer sprite;
@@ -16,10 +17,11 @@ public class PlayerMovement : MonoBehaviour
     private float dirx = 0f;
     [SerializeField] private float moveSpeed = 7f;
     [SerializeField] private float jumpForce= 14f;
+    [SerializeField] private float lastClickTime;
 
     private enum MovementState
     {
-        idle, running, jumping, falling
+        idle, running, jumping, falling, attacking, striking
     }
 
 
@@ -51,6 +53,7 @@ public class PlayerMovement : MonoBehaviour
     private void UpdateAnimationState()
     {
         MovementState state;
+
         if (dirx > 0f)
         {
             state = MovementState.running;
@@ -61,7 +64,6 @@ public class PlayerMovement : MonoBehaviour
             state = MovementState.running;
             sprite.flipX = true;
         }
-
         else
         {
             state = MovementState.idle;
@@ -74,6 +76,22 @@ public class PlayerMovement : MonoBehaviour
         else if (rb.velocity.y < -.1f)
         {
             state = MovementState.falling;
+        }
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            
+            float timeSinceLastClick = Time.time - lastClickTime;
+            if (timeSinceLastClick <= DOUBLE_CLICK_TIME)
+            {
+                state = MovementState.striking;
+            }
+            else
+            {
+                state = MovementState.attacking;
+            }
+            lastClickTime = Time.time;
+            
         }
 
         anim.SetInteger("state", (int)state);

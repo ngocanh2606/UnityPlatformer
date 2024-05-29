@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -19,9 +21,11 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float jumpForce= 14f;
     [SerializeField] private float lastClickTime;
 
+    [SerializeField] private GameObject fireballPrefab;
+
     private enum MovementState
     {
-        idle, running, jumping, falling, attacking, striking
+        idle, running, jumping, falling, attacking, shooting
     }
 
 
@@ -80,17 +84,19 @@ public class PlayerMovement : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
+
+            state = MovementState.attacking;
+        }
+
+        if (Input.GetMouseButtonDown(1)&&(Time.time - lastClickTime>0.5f))
+        {
+            state = MovementState.shooting;
+            if(rb.velocity.y<.1f && rb.velocity.y>-.1f)
+            { 
+                ShootFireBall();
+                lastClickTime = Time.time;
+            }
             
-            float timeSinceLastClick = Time.time - lastClickTime;
-            if (timeSinceLastClick <= DOUBLE_CLICK_TIME)
-            {
-                state = MovementState.striking;
-            }
-            else
-            {
-                state = MovementState.attacking;
-            }
-            lastClickTime = Time.time;
             
         }
 
@@ -100,6 +106,13 @@ public class PlayerMovement : MonoBehaviour
     private bool IsGrounded()
     {
         return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, .1f, jumpableGround);
+    }
+
+    private void ShootFireBall()
+    {
+        GameObject go = Instantiate(fireballPrefab, transform.position + new Vector3((sprite.flipX ? -1.2f : 1.2f), -1.0f, 0), Quaternion.identity);
+        FireBall fb = go.GetComponent<FireBall>();
+        fb.Launch(sprite.flipX ? -1 : 1);
     }
 }
  

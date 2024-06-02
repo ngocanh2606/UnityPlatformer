@@ -25,7 +25,7 @@ public class PlayerMovement : MonoBehaviour
 
     private enum MovementState
     {
-        idle, running, jumping, falling, attacking, shooting
+        idle, running, jumping, falling, attacking, shooting, hurt
     }
 
 

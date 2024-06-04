@@ -90,24 +90,21 @@ public class PlayerMovement : MonoBehaviour
 
         if (Input.GetMouseButtonDown(1)&&(Time.time - lastClickTime>0.5f))
         {
-            state = MovementState.shooting;
-            if(rb.velocity.y<.1f && rb.velocity.y>-.1f)
-            { 
-                ShootFireBall();
-                lastClickTime = Time.time;
-            }
-            
-            
+            state = MovementState.shooting; 
+            ShootFireBall();
+            lastClickTime = Time.time; 
         }
 
         anim.SetInteger("state", (int)state);
     }
 
+    //check if player is tounching the ground
     private bool IsGrounded()
     {
         return Physics2D.BoxCast(coll.bounds.center, coll.bounds.size, 0f, Vector2.down, .1f, jumpableGround);
     }
 
+    //shoot fire ball in the direction of facing
     private void ShootFireBall()
     {
         GameObject go = Instantiate(fireballPrefab, transform.position + new Vector3((sprite.flipX ? -1.2f : 1.2f), -1.0f, 0), Quaternion.identity);

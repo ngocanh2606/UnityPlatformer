@@ -158,6 +158,8 @@ MonoBehaviour:
   jumpSoundEffect: {fileID: 5132730936039454129}
   moveSpeed: 7
   jumpForce: 14
+  lastClickTime: 0
+  fireballPrefab: {fileID: 0}
 --- !u!95 &5132730936039454142
 Animator:
   serializedVersion: 4

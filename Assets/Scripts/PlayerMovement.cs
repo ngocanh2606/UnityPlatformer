@@ -18,10 +18,17 @@ public class PlayerMovement : MonoBehaviour
 
     private float dirx = 0f;
     [SerializeField] private float moveSpeed = 7f;
-    [SerializeField] private float jumpForce= 14f;
-    [SerializeField] private float lastClickTime;
+    [SerializeField] private float jumpForce = 14f;
+    private float lastClickTime = 0;
 
     [SerializeField] private GameObject fireballPrefab;
+    [SerializeField] private LayerMask enemyLayers;
+    [SerializeField] private Collider2D meleeHitBox;
+
+    private ContactFilter2D meleeContactFilter;
+    private List<Collider2D> enemiesHitOnAttack = new();
+
+    private bool isFacingRight = true;
 
     private enum MovementState
     {
@@ -32,6 +39,8 @@ public class PlayerMovement : MonoBehaviour
     // Start is called before the first frame update
     private void Start()
     {
+        meleeContactFilter.SetLayerMask(enemyLayers);
+
         rb = GetComponent<Rigidbody2D>();
         coll = GetComponent<BoxCollider2D>();
         sprite = GetComponent<SpriteRenderer>();
@@ -61,19 +70,25 @@ public class PlayerMovement : MonoBehaviour
         if (dirx > 0f)
         {
             state = MovementState.running;
-            sprite.flipX = false;
+            if (!isFacingRight)
+            {
+                Flip();
+            }
         }
         else if (dirx < 0f)
         {
             state = MovementState.running;
-            sprite.flipX = true;
+            if (isFacingRight)
+            {
+                Flip();
+            }
         }
         else
         {
             state = MovementState.idle;
         }
 
-        if (rb.velocity.y> .1f)
+        if (rb.velocity.y > .1f)
         {
             state = MovementState.jumping;
         }
@@ -84,18 +99,29 @@ public class PlayerMovement : MonoBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
+            enemiesHitOnAttack.Clear();
+            Physics2D.OverlapCollider(meleeHitBox, meleeContactFilter, enemiesHitOnAttack);
 
             state = MovementState.attacking;
         }
 
-        if (Input.GetMouseButtonDown(1)&&(Time.time - lastClickTime>0.5f))
+        if (Input.GetMouseButtonDown(1) && (Time.time - lastClickTime > 0.33f))
         {
-            state = MovementState.shooting; 
+            state = MovementState.shooting;
             ShootFireBall();
-            lastClickTime = Time.time; 
+            lastClickTime = Time.time;
         }
 
         anim.SetInteger("state", (int)state);
+    }
+
+    //flip player and children
+    private void Flip()
+    {
+        isFacingRight = !isFacingRight;
+        Vector3 localScale = transform.localScale;
+        localScale.x *= -1;
+        transform.localScale = localScale;
     }
 
     //check if player is tounching the ground
@@ -107,9 +133,9 @@ public class PlayerMovement : MonoBehaviour
     //shoot fire ball in the direction of facing
     private void ShootFireBall()
     {
-        GameObject go = Instantiate(fireballPrefab, transform.position + new Vector3((sprite.flipX ? -1.2f : 1.2f), -1.0f, 0), Quaternion.identity);
+        GameObject go = Instantiate(fireballPrefab, transform.position + new Vector3((isFacingRight ? 1.0f : -1.0f), -1.0f, 0), Quaternion.identity);
         FireBall fb = go.GetComponent<FireBall>();
-        fb.Launch(sprite.flipX ? -1 : 1);
+        fb.Launch(isFacingRight ? 1 : -1);
     }
 }
  

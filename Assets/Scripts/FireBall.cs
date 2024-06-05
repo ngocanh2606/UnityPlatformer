@@ -6,13 +6,14 @@ public class FireBall : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer renderer;
     [SerializeField] private Rigidbody2D rb;
-    [SerializeField] private float damage;
     [SerializeField] private float flySpeed;
+    [SerializeField] private LayerMask collidableLayers;
 
     private void Awake()
     {
         if (!rb)
         {
+            renderer = GetComponent<SpriteRenderer>();
             rb = GetComponent<Rigidbody2D>();
         }
     }
@@ -32,8 +33,9 @@ public class FireBall : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        
-        Destroy(gameObject);
+        if (collidableLayers == (collidableLayers | (1 << collision.gameObject.layer)))
+        {
+            Destroy(gameObject);
+        }
     }
-
 }

@@ -7,9 +7,15 @@ public class CameraController : MonoBehaviour
     [SerializeField] private Transform player, firstBackground, secondBackground, thirdBackground, fourthBackground;
     private Vector2 lastPosition;
 
+    [SerializeField] private Camera mainCamera;
+    [SerializeField] private SpriteRenderer backgroundRenderer;
+
     void Start()
     {
         lastPosition = transform.position;
+
+        float widthToBeSeen = backgroundRenderer.bounds.size.x;
+        mainCamera.orthographicSize = widthToBeSeen * Screen.height / Screen.width * 0.5f; //camera fit to background width
     }
 
     private void Update()

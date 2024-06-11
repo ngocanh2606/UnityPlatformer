@@ -4,19 +4,23 @@ using UnityEngine;
 
 public class EnemyMovement : MonoBehaviour
 {
-    [SerializeField] private GameObject[] waypoints;
-    [SerializeField] private GameObject player;
-    [SerializeField] private GameObject[] stopPoints;
-    [SerializeField] private GameObject beeBullet;
+    //set up for moving between 2 points
     private int currentWaypointIndex = 0;
     private int waypointLength;
+    [SerializeField] private GameObject[] waypoints;
 
+    [SerializeField] private GameObject player;
+    [SerializeField] private GameObject beeBullet;
+    
     private SpriteRenderer sprite;
-    [SerializeField] private int health;
+
+    [SerializeField] private int lastFrameHealth; //the health value before getting injured
+    public int currentHealth;
+
     [SerializeField] private float speed;
     [SerializeField] private AnimationClip attackClip;
-    [SerializeField] private float attackDelay;
-    private float lastHitTime = 0;
+
+    [SerializeField] private float attackDelay; //0.5s after the Bee_Moving animation starts
     private float spawnRate;
     private float spawnTimer;
 
@@ -24,17 +28,23 @@ public class EnemyMovement : MonoBehaviour
     private MovementState state;
 
     private bool attack;
+    private bool alive;
+    private float lastHitTime = 0;
 
+    //use to set integer for animation state, easier to understand than numbers
     private enum MovementState
     {
         moving, hit
     }
+
     // Start is called before the first frame update
     void Start()
     {
         sprite = GetComponent<SpriteRenderer>();
         anim = GetComponent<Animator>();
         state = MovementState.moving;
+        currentHealth = lastFrameHealth;
+        alive = true;
 
         if (attackClip)
         {
@@ -47,45 +57,31 @@ public class EnemyMovement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (health <= 0)
+        if (lastFrameHealth <= 0 && alive==true)
         {
-            anim.SetTrigger("death");
             StartCoroutine(Die());
+            alive = false; //avoid any action when death animation is happening
+        }
+        else if (lastFrameHealth > 0 && alive==true) 
+        {
+
+            if (Hit())
+            {
+                state = MovementState.hit;
+            }
+            else
+            {
+                Moving(); //enemy keep moving if not being injured or dying
+            }
+            anim.SetInteger("state", (int)state);
         }
         
-        anim.SetInteger("state", (int)state);
-
-        Moving();
-    }
-
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (Time.time - lastHitTime > 0.6f)
-        {
-            if (collision.gameObject.CompareTag("Sword"))
-            {
-                health -= 1;
-                state = MovementState.hit;
-                lastHitTime = Time.time;
-            }
-        }
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (Time.time - lastHitTime >= 0.7f)
-        {
-            if (collision.gameObject.CompareTag("Fire ball"))
-            {
-                health -= 2;
-                state = MovementState.hit;
-                lastHitTime = Time.time;
-            }
-        } 
+        
     }
 
     private void Moving()
     {
+        state = MovementState.moving;
         if (Vector2.Distance(waypoints[currentWaypointIndex].transform.position, transform.position) < .1f)
         {
             currentWaypointIndex++;
@@ -103,13 +99,28 @@ public class EnemyMovement : MonoBehaviour
         spawnTimer -= Time.deltaTime;
         if (gameObject.CompareTag("Bee"))
         {
-            if (spawnTimer < 0)
+            if (spawnTimer < 0) //bee drops bullet after some time to match with animation
             {
                 Attack();
                 spawnTimer = spawnRate;
             }
         }
          
+    }
+
+    private bool Hit()
+    {
+        bool hit = false;
+        if(currentHealth < lastFrameHealth) { //compare with the health before getting injured
+            if (Time.time - lastHitTime >= 0.7f)
+            {
+                hit = true;
+                
+                lastHitTime = Time.time;
+                lastFrameHealth= currentHealth;
+            }
+        }
+        return hit;
     }
 
     void Attack()
@@ -120,7 +131,10 @@ public class EnemyMovement : MonoBehaviour
 
     IEnumerator Die()
     {
-        yield return new WaitForSeconds(4);
-        Destroy(this);
+        anim.SetTrigger("death");
+        yield return new WaitForSeconds(.5f); //wait animation to complete before destroying the game object
+        Debug.Log("Destroy enemy");
+        Destroy(gameObject);
     }
+
 }

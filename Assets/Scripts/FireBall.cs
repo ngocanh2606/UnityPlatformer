@@ -8,6 +8,7 @@ public class FireBall : MonoBehaviour
     [SerializeField] private Rigidbody2D rb;
     [SerializeField] private float flySpeed;
     [SerializeField] private LayerMask collidableLayers;
+   
 
     private void Awake()
     {
@@ -17,6 +18,7 @@ public class FireBall : MonoBehaviour
             rb = GetComponent<Rigidbody2D>();
         }
     }
+
 
     public void Launch(float direction)
     {
@@ -33,6 +35,12 @@ public class FireBall : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Enemies"))
+        {
+            EnemyMovement enemy = collision.GetComponent<EnemyMovement>(); //access EnemyMovement script
+            enemy.currentHealth -= 1; //health decrease
+            Debug.Log("Enemy current health is " + enemy.currentHealth);
+        }
         if (collidableLayers == (collidableLayers | (1 << collision.gameObject.layer)))
         {
             Destroy(gameObject);

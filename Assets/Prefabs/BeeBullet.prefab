@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 3471589537080374291}
   m_Layer: 8
   m_Name: BeeBullet
-  m_TagString: Untagged
+  m_TagString: Bullet
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -97,7 +97,7 @@ CapsuleCollider2D:
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0.00012259254, y: -0.0036722485}
@@ -137,7 +137,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rb: {fileID: 3471589537080374290}
-  fallSpeed: 0
   collidableLayers:
     serializedVersion: 2
     m_Bits: 576

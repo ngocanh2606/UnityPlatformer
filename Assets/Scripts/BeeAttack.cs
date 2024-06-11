@@ -6,7 +6,6 @@ using UnityEngine;
 public class BeeAttack : MonoBehaviour
 {
     [SerializeField] private Rigidbody2D rb;
-    [SerializeField] private float fallSpeed;
     [SerializeField] private LayerMask collidableLayers;
 
     private void Awake()
@@ -18,12 +17,14 @@ public class BeeAttack : MonoBehaviour
     }
 
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnCollisionEnter2D(Collision2D collision)
     {
         if (collidableLayers == (collidableLayers | (1 << collision.gameObject.layer))) //only collides with player or ground
         {
+
             Destroy(gameObject);
         }
     }
+
 
 }

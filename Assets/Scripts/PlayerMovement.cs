@@ -6,7 +6,6 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    private const float DOUBLE_CLICK_TIME = .3f;
     private Rigidbody2D rb;
     private BoxCollider2D coll;
     private SpriteRenderer sprite;
@@ -15,11 +14,15 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private LayerMask jumpableGround;
 
     [SerializeField] private AudioSource jumpSoundEffect;
+    [SerializeField] private AudioSource shootSoundEffect;
+    [SerializeField] private AudioSource getHitSoundEffect;
+    [SerializeField] private AudioSource meleeSoundEffect;
 
     private float dirx = 0f;
     [SerializeField] private float moveSpeed = 7f;
     [SerializeField] private float jumpForce = 14f;
     private float lastClickTime = 0;
+    private float lastHitTime = 0;
 
     [SerializeField] private GameObject fireballPrefab;
     [SerializeField] private LayerMask enemyLayers;
@@ -29,7 +32,9 @@ public class PlayerMovement : MonoBehaviour
     private List<Collider2D> enemiesHitOnAttack = new();
 
     private bool isFacingRight = true;
+    private MovementState state;
 
+    //use to set integer for animation state, easier to understand than numbers
     private enum MovementState
     {
         idle, running, jumping, falling, attacking, shooting, hurt
@@ -50,8 +55,12 @@ public class PlayerMovement : MonoBehaviour
     // Update is called once per frame
     private void Update()
     {
-        dirx = Input.GetAxisRaw("Horizontal");
-        rb.velocity = new Vector2(dirx * moveSpeed, rb.velocity.y);
+        if (Time.time-lastHitTime>.4f) //only move when hurt animation has finished
+        {
+            dirx = Input.GetAxisRaw("Horizontal");
+            rb.velocity = new Vector2(dirx * moveSpeed, rb.velocity.y);
+        }
+        
 
         if (Input.GetButtonDown("Jump") && IsGrounded())
         {
@@ -59,14 +68,16 @@ public class PlayerMovement : MonoBehaviour
             rb.velocity = new Vector2(rb.velocity.x, jumpForce);
         }
 
+
         UpdateAnimationState();
+
     }
 
 
     private void UpdateAnimationState()
     {
-        MovementState state;
 
+        anim.SetInteger("state", (int)state);
         if (dirx > 0f)
         {
             state = MovementState.running;
@@ -97,25 +108,26 @@ public class PlayerMovement : MonoBehaviour
             state = MovementState.falling;
         }
 
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0)&&IsGrounded())
         {
-            enemiesHitOnAttack.Clear();
-            Physics2D.OverlapCollider(meleeHitBox, meleeContactFilter, enemiesHitOnAttack);
-
             state = MovementState.attacking;
+
+            meleeSoundEffect.Play();
+            PlayerMelee(1);
         }
 
         if (Input.GetMouseButtonDown(1) && (Time.time - lastClickTime > 0.33f))
         {
             state = MovementState.shooting;
+            shootSoundEffect.Play();
             ShootFireBall();
             lastClickTime = Time.time;
         }
 
-        anim.SetInteger("state", (int)state);
+        
     }
 
-    //flip player and children
+    //flip player and its children
     private void Flip()
     {
         isFacingRight = !isFacingRight;
@@ -136,6 +148,33 @@ public class PlayerMovement : MonoBehaviour
         GameObject go = Instantiate(fireballPrefab, transform.position + new Vector3((isFacingRight ? 1.0f : -1.0f), -1.0f, 0), Quaternion.identity);
         FireBall fb = go.GetComponent<FireBall>();
         fb.Launch(isFacingRight ? 1 : -1);
+    }
+
+    private void PlayerMelee(int damamgeValue)
+    {
+        enemiesHitOnAttack.Clear();
+        Physics2D.OverlapCollider(meleeHitBox, meleeContactFilter, enemiesHitOnAttack);
+        for (int i = 0; i < enemiesHitOnAttack.Count; i++) //loop through all hit objects
+        {
+            if (enemiesHitOnAttack[i].gameObject.layer == LayerMask.NameToLayer("Enemies")) //if hit object is enemy
+            {
+                EnemyMovement enemy = enemiesHitOnAttack[i].GetComponent<EnemyMovement>(); //access EnemyMovement script
+                enemy.currentHealth -= 2; //health decrease
+            }
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.layer == LayerMask.NameToLayer("Enemies"))
+        {
+            if (Time.time - lastHitTime > 1f) 
+            {
+                state = MovementState.hurt;
+                lastHitTime=Time.time;
+                getHitSoundEffect.Play();
+            }
+        }
     }
 }
  
